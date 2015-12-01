@@ -4,15 +4,17 @@ import sys
 import numpy as np
 from datetime import date
 from time import mktime
+from sklearn.svm import SVC
 from sklearn.preprocessing import OneHotEncoder 
 from sklearn.preprocessing import StandardScaler
+from sklearn.cross_validation import cross_val_score
+from sklearn.tree import DecisionTreeClassifier
 
 ##
-# This is a placeholder file; eventually, this will perform the preprocessing step
+# read files
 ##
-
-if __name__ == '__main__':
-  with open('../data/train.csv') as csvfile:
+def read_file(fpath):
+  with open(fpath) as csvfile:
     reader = csv.reader(csvfile)
 
     rawlabels = reader.next()
@@ -46,24 +48,41 @@ if __name__ == '__main__':
       parsed_row[2] = float(parsed_row[2])
       parsed_row[3] = int(parsed_row[3])
 
-      classes.append(labels['WnvPresent'])
+      classes.append(row[labels['WnvPresent']])
       data.append(parsed_row)
 
-    # Create discrete and continuous data matrices
-    discrete_X = np.array(spec_data)
-    cont_X = np.array(data)
+  return data, spec_data, classes
+  
 
-    # Discrete basis representation
-    enc = OneHotEncoder()
-    enc.fit(discrete_X)
-    discrete_X = enc.transform(discrete_X).toarray()
+##
+# Performs preprocessing and some classification
+##
+if __name__ == '__main__':
+  # Read the files
+  data, spec_data, classes = read_file('../data/train.csv')
 
-    # Continuous scaling
-    scaler = StandardScaler()
-    scaler.fit(cont_X)
-    cont_X = scaler.transform(cont_X)
+  # Create discrete and continuous data matrices
+  discrete_X = np.array(spec_data)
+  cont_X = np.array(data)
 
-    # Merge to one array
-    X = np.concatenate((discrete_X, cont_X), axis=1)
+  # Discrete basis representation
+  enc = OneHotEncoder()
+  enc.fit(discrete_X)
+  discrete_X = enc.transform(discrete_X).toarray()
 
-    print X
+  # Continuous scaling
+  scaler = StandardScaler()
+  scaler.fit(cont_X)
+  cont_X = scaler.transform(cont_X)
+
+  # Merge to one array
+  X = np.concatenate((discrete_X, cont_X), axis=1) 
+
+  for k in ['rbf', 'linear', 'poly']:
+    print "%s & " % k
+    svm = SVC(kernel=k)
+
+    cval_scores = cross_val_score(svm, X, classes, cv=5)
+
+    print "%0.5f (+/- %0.5f) & " % (cval_scores.mean(), cval_scores.std() * 2)
+    
