@@ -4,6 +4,8 @@ import sys
 import numpy as np
 from datetime import date
 from time import mktime
+from sklearn.preprocessing import OneHotEncoder 
+from sklearn.preprocessing import StandardScaler
 
 ##
 # This is a placeholder file; eventually, this will perform the preprocessing step
@@ -18,15 +20,16 @@ if __name__ == '__main__':
     for i in range(len(rawlabels)):
       labels[rawlabels[i]] = i
 
-    labels_to_keep = ['Date', 'Species', 'Latitude', 'Longitude', 'NumMosquitos']
+    cont_labels = ['Date', 'Latitude', 'Longitude', 'NumMosquitos']
     species = {} # maps a species string to an integer
     species_ct  = 0  # total number of species
 
 
     data = []
+    spec_data = []
     classes = []
     for row in reader:
-      parsed_row = [row[labels[s]] for s in labels_to_keep]
+      parsed_row = [row[labels[s]] for s in cont_labels]
       
       # Convert date to number
       date_parts = parsed_row[0].split('-')
@@ -36,16 +39,31 @@ if __name__ == '__main__':
       if parsed_row[1] not in species:
         species[parsed_row[1]] = species_ct
         species_ct += 1
-      parsed_row[1] = species[parsed_row[1]]
+      spec_data.append([species[parsed_row[1]]])
 
       # Convert lat/long to numbers (instead of strings)
+      parsed_row[1] = float(parsed_row[1])
       parsed_row[2] = float(parsed_row[2])
-      parsed_row[3] = float(parsed_row[3])
-      parsed_row[4] = int(parsed_row[4])
+      parsed_row[3] = int(parsed_row[3])
 
       classes.append(labels['WnvPresent'])
       data.append(parsed_row)
 
-    X = np.array(data)
-    print X
+    # Create discrete and continuous data matrices
+    discrete_X = np.array(spec_data)
+    cont_X = np.array(data)
 
+    # Discrete basis representation
+    enc = OneHotEncoder()
+    enc.fit(discrete_X)
+    discrete_X = enc.transform(discrete_X).toarray()
+
+    # Continuous scaling
+    scaler = StandardScaler()
+    scaler.fit(cont_X)
+    cont_X = scaler.transform(cont_X)
+
+    # Merge to one array
+    X = np.concatenate((discrete_X, cont_X), axis=1)
+
+    print X
