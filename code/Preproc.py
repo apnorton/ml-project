@@ -127,8 +127,18 @@ def merge_data(test_data, weather_data):
   for t_row in test_data:
     while(t_row[0] != weather_data[i][0])
       i += 1
-
-
+     
+# below is code that is separate from what you have above.  Take a look at it, the idea
+# here is to take the data from test_data, and compare it to weather_data.  It cycles through all
+# the weather_data dates until it finds a match, then it concatenates the two data entries into
+# total_data.  Does this for all the points in test_data. This takes advantage of the fact that
+# both the weather_data and total_data time ascending order.       
+    j = 0  
+	for j in test_data: #question -- is this counting the number of rows in test_data...so j from 0 to the number of rows?
+		while(weather_data[i,0] != test_data[j,0])
+			i+= 1
+		total_data[j,:] = np.concatenate((test_data[j,:], weather_data[i,:]), axis=1)
+	
 ##
 # Performs preprocessing and some classification
 ##
