@@ -7,7 +7,7 @@ from time import mktime
 from sklearn.svm import SVC
 from sklearn.preprocessing import Imputer
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.preprocessing import OneHotEncoder 
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.cross_validation import cross_val_score
 
@@ -24,20 +24,22 @@ def read_file(fpath, isTraining=True):
   with open(fpath) as csvfile:
     reader = csv.reader(csvfile)
 
+    # Read in data labels
     rawlabels = reader.next()
     labels = {}
     for i in range(len(rawlabels)):
       labels[rawlabels[i]] = i
 
-    cont_labels = ['Date', 'Latitude', 'Longitude']#, 'NumMosquitos']
+    # Continous variable labels
+    cont_labels = ['Date', 'Latitude', 'Longitude']
 
+    data = [] # This stores the total continuous dataset
+    spec_data = [] # This is the discrete data set (species data)
+    classes = [] # The class labels
 
-    data = []
-    spec_data = []
-    classes = []
     for row in reader:
-      cont_data = [row[labels[s]] for s in cont_labels]
-      
+      cont_data = [row[labels[s]] for s in cont_labels] # get continuous data
+
       # Convert date to number
       date_parts = cont_data[0].split('-')
       cont_data[0] = mktime(date(int(date_parts[0]), int(date_parts[1]), int(date_parts[2])).timetuple())
@@ -51,7 +53,6 @@ def read_file(fpath, isTraining=True):
       # Convert lat/long to numbers (instead of strings)
       cont_data[1] = float(cont_data[1])
       cont_data[2] = float(cont_data[2])
-      #cont_data[3] = int(cont_data[3])
 
       if isTraining:
         classes.append(int(row[labels['WnvPresent']]))
@@ -75,12 +76,16 @@ def read_weather_data(fname):
     cont_labels = ['Date', 'Tavg', 'Depart', 'DewPoint', 'StnPressure', 'AvgSpeed']
 
     for row in reader:
-      cont_row = [row[labels[s]] for s in cont_labels]
+      # Only consider station 1
+      if row[labels['Station']] != '1':
+        continue
+
+      cont_row = [row[labels[s]] for s in cont_labels] # get the columns we want
 
       # Convert date to number
       date_parts = cont_row[0].split('-')
       cont_row[0] = mktime(date(int(date_parts[0]), int(date_parts[1]), int(date_parts[2])).timetuple())
-      
+
       # Convert strings to integers/floats
       cont_row[labels['Tavg']] = int(cont_row[labels['Tavg']])
       cont_row[labels['Depart']] = int(cont_row[labels['Depart']])
@@ -92,7 +97,7 @@ def read_weather_data(fname):
 
     return cont_data
 
-  
+
 def process(discrete, cont):
   # Create discrete and continuous data matrices
   discrete_X = np.array(discrete)
@@ -113,8 +118,15 @@ def process(discrete, cont):
   cont_X = scaler.transform(cont_X)
 
   # Merge to one array
-  X = np.concatenate((discrete_X, cont_X), axis=1) 
+  X = np.concatenate((discrete_X, cont_X), axis=1)
   return X
+
+def merge_data(test_data, weather_data):
+  total_data = None
+  i = 0
+  for t_row in test_data:
+    while(t_row[0] != weather_data[i][0])
+      i += 1
 
 
 ##
@@ -142,7 +154,7 @@ if __name__ == '__main__':
       csvwriter.writerow([i+1, y_hat[i]])
 
   print 'File written'
-    
+
 
   for k in ['linear', 'poly', 'rbf']:
     svm = SVC(kernel=k)
@@ -150,4 +162,3 @@ if __name__ == '__main__':
     cval_scores = cross_val_score(svm, X, classes, cv=5)
 
     print "%s: %0.5f (+/- %0.5f) " % (k, cval_scores.mean(), cval_scores.std() * 2)
-    
