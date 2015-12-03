@@ -195,7 +195,7 @@ if __name__ == '__main__':
     csvwriter = csv.writer(csvfile)
     csvwriter.writerow(['id', 'WnvPresent'])
     for i in range(len(y_hat1)):
-      classification = y_hat1[i]#max([y_hat1[i], y_hat2[i], y_hat3[i], y_hat4[i]])
+      classification = max([y_hat1[i], y_hat2[i], y_hat3[i], y_hat4[i]])
       csvwriter.writerow([i+1, classification])
 
   print 'File written'
