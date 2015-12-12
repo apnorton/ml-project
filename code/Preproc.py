@@ -4,6 +4,7 @@ import sys
 import numpy as np
 from datetime import date
 from time import mktime
+from operator import add
 from sklearn.svm import SVC
 from sklearn.preprocessing import Imputer
 from sklearn.naive_bayes import GaussianNB
@@ -40,29 +41,44 @@ def read_file(fpath, isTraining=True):
     spec_data = [] # This is the discrete data set (species data)
     classes = [] # The class labels
 
+
+    pos_ct = {}
+    neg_ct = {}
+    lastRow = [0, 0, 0]
+    mosCount = []
     for row in reader:
-      cont_data = [row[labels[s]] for s in cont_labels] # get continuous data
+      if row[:-2] == lastRow[:-2]:
+        # If this row is a duplicate of the prior row
+        # only update the count of mosquitos and class label
+        if isTraining:
+          mosCount[-1] += int(row[labels['NumMosquitos']])
+          classes[-1]  = max(classes[-1], int(row[labels['WnvPresent']]))
+      else:
+        cont_data = [row[labels[s]] for s in cont_labels] # get continuous data
 
-      # Convert date to number
-      date_parts = cont_data[0].split('-')
-      cont_data[0] = mktime(date(int(date_parts[0]), int(date_parts[1]), int(date_parts[2])).timetuple())
+        # Convert date to number
+        date_parts = cont_data[0].split('-')
+        cont_data[0] = mktime(date(int(date_parts[0]), int(date_parts[1]), int(date_parts[2])).timetuple())
 
-      # Convert species to number
-      if row[labels['Species']] not in species:
-        species[row[labels['Species']]] = species_ct
-        species_ct += 1
-      spec_data.append([species[row[labels['Species']]]])
+        # Convert species to number
+        if row[labels['Species']] not in species:
+          species[row[labels['Species']]] = species_ct
+          species_ct += 1
+        spec_data.append([species[row[labels['Species']]]])
 
-      # Convert lat/long to numbers (instead of strings)
-      cont_data[1] = float(cont_data[1])
-      cont_data[2] = float(cont_data[2])
+        # Convert lat/long to numbers (instead of strings)
+        cont_data[1] = float(cont_data[1])
+        cont_data[2] = float(cont_data[2])
 
-      if isTraining:
-        classes.append(int(row[labels['WnvPresent']]))
+        if isTraining:
+          mosCount.append(int(row[labels['NumMosquitos']]))
+          classes.append(int(row[labels['WnvPresent']]))
 
-      data.append(cont_data)
+        data.append(cont_data)
 
-  return data, spec_data, classes
+      lastRow = row
+
+  return data, spec_data, mosCount, classes
 
 def read_weather_data(fpath):
   cont_data = []
@@ -153,15 +169,18 @@ def merge_data(test_data, weather_data):
 ##
 if __name__ == '__main__':
   # Read the files
-  data, spec_data, classes = read_file('../data/train.csv')
+  data, spec_data, mos_count, classes = read_file('../data/train.csv')
   weather_data = read_weather_data('../data/weather.csv')
+
+  print len(mos_count)
+  print len(data)
 
   data = merge_data(data, weather_data)
 
   with open('../data/traindata.csv', 'w') as csvfile:
     csvwriter = csv.writer(csvfile)
-    for row in data:
-      csvwriter.writerow(row)
+    for i in range(len(data)):
+      csvwriter.writerow(list(data[i]) + [mos_count[i], classes[i]])
 
   print 'Wrote merged file'
 
@@ -169,7 +188,7 @@ if __name__ == '__main__':
 
 
   ## Read test file:
-  test_cdata, test_ddata, dummy = read_file('../data/test.csv', isTraining=False)
+  test_cdata, test_ddata, dummy, dummy2 = read_file('../data/test.csv', isTraining=False)
   test_cdata = merge_data(test_cdata, weather_data)
 
   testX = process(test_ddata, test_cdata)
@@ -182,37 +201,50 @@ if __name__ == '__main__':
   knn = KNeighborsClassifier(5)
   nb = GaussianNB()
   dt = DecisionTreeClassifier(random_state=0, criterion='entropy')
+  svm = SVC(class_weight = 'balanced', C=100, kernel='poly')
 
   nb.fit(X, classes)
+  print "Fit Naive Bayes"
   rfc.fit(X, classes)
+  print "Fit Random Forest"
   dt.fit(X, classes)
+  print "Fit D tree"
   knn.fit(X, classes)
+  print "Fit KNN"
+  svm.fit(X, classes)
+  print "Fit SVM"
+
   y_hat1 = nb.predict(testX)
-  y_hat2 = rfc.predict(testX)
-  y_hat3 = dt.predict(testX)
-  y_hat4 = knn.predict(testX)
+  #y_hat2 = rfc.predict(testX)
+  #y_hat3 = dt.predict(testX)
+  #y_hat4 = knn.predict(testX)
+  y_hat5 = svm.predict(testX)
   with open('../data/testoutput.csv', 'w') as csvfile:
     csvwriter = csv.writer(csvfile)
     csvwriter.writerow(['id', 'WnvPresent'])
     for i in range(len(y_hat1)):
-      classification = max([y_hat1[i], y_hat2[i], y_hat3[i], y_hat4[i]])
+      classification = y_hat5[i]#max([y_hat1[i], y_hat2[i], y_hat3[i], y_hat4[i]])
       csvwriter.writerow([i+1, classification])
 
   print 'File written'
 
-  cval_scores = cross_val_score(rfc, X, classes, cv=5)
+  cval_scores = cross_val_score(rfc, X, classes, cv=3)
   print "%s: %0.5f (+/- %0.5f) " % ('rfc', cval_scores.mean(), cval_scores.std() * 2)
-  cval_scores = cross_val_score(dt, X, classes, cv=5)
+  cval_scores = cross_val_score(dt, X, classes, cv=3)
   print "%s: %0.5f (+/- %0.5f) " % ('dt', cval_scores.mean(), cval_scores.std() * 2)
-  cval_scores = cross_val_score(nb, X, classes, cv=5)
+  cval_scores = cross_val_score(nb, X, classes, cv=3)
   print "%s: %0.5f (+/- %0.5f) " % ('nb', cval_scores.mean(), cval_scores.std() * 2)
 
-  cval_scores = cross_val_score(knn, X, classes, cv=5)
+  cval_scores = cross_val_score(knn, X, classes, cv=3)
   print "%s: %0.5f (+/- %0.5f) " % ('knn', cval_scores.mean(), cval_scores.std() * 2)
 
-  for k in ['linear', 'poly', 'rbf']:
-    svm = SVC(kernel=k)
+  cval_scores = cross_val_score(svm, X, classes, cv=3)
 
-    cval_scores = cross_val_score(svm, X, classes, cv=5)
+  print "%s: %0.5f (+/- %0.5f) " % ('SVC C=...', cval_scores.mean(), cval_scores.std() * 2)
+  
+  for k in ['linear', 'poly', 'rbf']:
+    svm = SVC(C=10, kernel=k)
+
+    cval_scores = cross_val_score(svm, X, classes, cv=3)
 
     print "%s: %0.5f (+/- %0.5f) " % (k, cval_scores.mean(), cval_scores.std() * 2)
