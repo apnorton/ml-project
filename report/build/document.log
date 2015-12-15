@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2015.1.15)  1 DEC 2015 21:53
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2015.1.15)  15 DEC 2015 14:54
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -193,7 +193,7 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 )
 \Hy@SectionHShift=\skip43
 )
-No file document.aux.
+(build/document.aux)
 \openout1 = `document.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 30.
@@ -211,11 +211,10 @@ LaTeX Font Info:    ... okay on input line 30.
 LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 30.
 LaTeX Font Info:    ... okay on input line 30.
 LaTeX Font Info:    Try loading font information for OT1+ptm on input line 30.
-(/usr/share/texlive/texmf-dist/tex/latex/psnfss/ot1ptm.fd
+ (/usr/share/texlive/texmf-dist/tex/latex/psnfss/ot1ptm.fd
 File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
 )
 \AtBeginShipoutBox=\box28
-
 (/usr/share/texlive/texmf-dist/tex/context/base/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count103
@@ -242,6 +241,8 @@ Package: gettitlestring 2010/12/03 v1.4 Cleanup title references (HO)
 LaTeX Info: Redefining \ref on input line 30.
 LaTeX Info: Redefining \pageref on input line 30.
 LaTeX Info: Redefining \nameref on input line 30.
+
+(build/document.out) (build/document.out)
 \@outlinefile=\write3
 \openout3 = `document.out'.
 
@@ -268,34 +269,27 @@ Missing character: There is no € in font ptmr7t!
 Missing character: There is no ™ in font ptmr7t!
  [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3]
-Underfull \hbox (badness 7722) in paragraph at lines 113--114
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4]
+Underfull \hbox (badness 7722) in paragraph at lines 140--141
 []\OT1/ptm/m/n/10 West Nile Virus Pre-dic-tion. (n.d.). Re-trieved Oc-to-ber 12
 , 2015, from
  []
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 119.
-[4]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 119.
- (./document.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 119.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 119.
-
-
-Package rerunfilecheck Warning: File `document.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `document.out':
-(rerunfilecheck)             Before: <no file>
-(rerunfilecheck)             After:  3990858DD86A3B5AE5871041DAF7169E;404.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 119.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 146.
+[5]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 146.
+ (build/document.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 146.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 146.
+Package rerunfilecheck Info: File `document.out' has not changed.
+(rerunfilecheck)             Checksum: <no file>.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 146.
  ) 
 Here is how much of TeX's memory you used:
- 5425 strings out of 494985
- 78953 string characters out of 6180356
- 164737 words of memory out of 5000000
- 8612 multiletter control sequences out of 15000+600000
+ 5451 strings out of 494985
+ 79304 string characters out of 6180356
+ 165871 words of memory out of 5000000
+ 8625 multiletter control sequences out of 15000+600000
  13867 words of font info for 29 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
  37i,8n,39p,1483b,318s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -304,10 +298,10 @@ e/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texm
 f-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texlive/texmf-dist/fonts/
 type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times
 /utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on document.pdf (4 pages, 74800 bytes).
+Output written on build/document.pdf (5 pages, 78799 bytes).
 PDF statistics:
- 62 PDF objects out of 1000 (max. 8388607)
- 50 compressed objects within 1 object stream
- 16 named destinations out of 1000 (max. 500000)
- 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 109 PDF objects out of 1000 (max. 8388607)
+ 96 compressed objects within 1 object stream
+ 22 named destinations out of 1000 (max. 500000)
+ 97 words of extra memory for PDF output out of 10000 (max. 10000000)
 

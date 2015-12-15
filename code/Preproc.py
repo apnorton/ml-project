@@ -254,27 +254,27 @@ if __name__ == '__main__':
   # Confusion Matrix
   if '-stat' in argv:
     print "====Confusion Matrix===="
+    
+    for label, m in zip(labels, machines):
+      X_train, X_test, y_train, y_test = train_test_split(X, classes, test_size=0.33, random_state=42, stratify=classes)
+      m.fit(X_train, y_train)
+      y_pred = m.predict(X_test)
+      cm = confusion_matrix(y_test, y_pred, labels=[1, 0]).astype(np.float)
+      print(cm)
+      print "Actual positive samples: %d" % (sum(y_test),)
+      plt.figure()
+      plot_confusion_matrix(cm, title='Confusion Matrix for ' + label)
 
-    classifier = svm 
-    X_train, X_test, y_train, y_test = train_test_split(X, classes, test_size=0.33, random_state=42, stratify=classes)
-    classifier.fit(X_train, y_train)
-    y_pred = classifier.predict(X_test)
-    cm = confusion_matrix(y_test, y_pred, labels=[1, 0]).astype(np.float)
-    print(cm)
-    print "Actual positive samples: %d" % (sum(y_test),)
-    plt.figure()
-    plot_confusion_matrix(cm)
+      # Precision & Recall:
+      print "\n====Statistics for %s====" % (label,)
+      prec = cm[0][0] / (cm[0][0] + cm[1][0])
+      rec  = cm[0][0] / (cm[0][0] + cm[0][1])
+      f1 = 2*prec*rec/(prec + rec)
+      print "Precision: %.4f" % (prec,)
+      print "Recall:    %.4f" % (rec,)
+      print "F1 Score:  %.4f" % (f1,)
 
-    # Precision & Recall:
-    print "\n====Statistics===="
-    prec = cm[0][0] / (cm[0][0] + cm[1][0])
-    rec  = cm[0][0] / (cm[0][0] + cm[0][1])
-    f1 = 2*prec*rec/(prec + rec)
-    print "Precision: %.4f" % (prec,)
-    print "Recall:    %.4f" % (rec,)
-    print "F1 Score:  %.4f" % (f1,)
-
-
+  if '-pca' in argv:
     #### Do the PCA plot
     plt.figure()
 
@@ -286,7 +286,9 @@ if __name__ == '__main__':
     
     for c, data, target_name in zip("gr", [no, yes], ["No WNV", "WNV"]):
       plt.scatter(data[:,0], data[:, 1], c=c, s=20, label=target_name)
+    plt.legend()
   
 
+  if '-pca' in argv or '-stat' in argv:
     # Print any plots
     plt.show()

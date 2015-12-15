@@ -5,7 +5,7 @@
 %\documentstyle[nips13submit_09,times,art10]{article} % For LaTeX 2.09
 
 
-\title{Semester Project Proposal}
+\title{West Nile Virus Prediction Using Machine Classification}
 
 
 \author{
@@ -94,6 +94,33 @@ The difference between recording a high accuracy versus a low accuracy can be in
 In the same vein, we will use k-fold cross validation to help select the right number of neighbors to consider in the K-Nearest-Neighbors  classifier.  Because the fewer neighbors considered increases the ``complexity'' of the model \textit{and} our dataset is quite skewed, selecting the $K$ value is important.  If we choose too low of a $K$ value, we will tend to overfit our data, but if $K$ is too high, then we will not be able to predict with accuracy.
 
 For completeness sake, our team will investigate some principles in the literature regarding kernel selection, such as diffusion kernel, Fisher kernel, string kernel, etc.
+
+\section{Experimental Results}
+\subsection{3-Fold Cross Validation}
+\begin{center}\begin{tabular}{|l|cc|}\hline
+	\textbf{Model} & \textbf{Accuracy} & \textbf{Std. Deviation} \\\hline
+	Support Vector Classifier & 0.5642 & 0.366 \\
+	Naive Bayes & 0.2109 & 0.140 \\
+	Random Forest & 0.6704 & 0.405 \\
+	Decision Tree & 0.6234 & 0.395 \\
+	5-Nearest Neighbor & 0.7346 & 0.327 \\\hline
+\end{tabular}\end{center}
+
+\subsection{Precision, Recall, and F1-Score}
+
+\subsection{Testing Accuracy}
+After tuning our model parameters with cross validation (and the F1-Score), we submitted our testing output to the Kaggle submission server.  We receive two results: a ``public'' score and a ``private'' score (this is a feature of Kaggle competitions, which allows closed-source programs to be judged on a separate dataset than open-source programs).  The table below summarizes our results for the private scoreboard:
+
+\begin{center}\begin{tabular}{|l|c|}\hline
+\textbf{Model} & \textbf{Accuracy} \\\hline
+Support Vector Classifier & 0.646 \\
+Naive Bayes & 0.535 \\
+Random Forest & 0.513 \\
+Decision Tree & 0.530 \\
+5-Nearest Neighbor & 0.5022 \\\hline
+\end{tabular}\end{center}
+
+\section{Conclusion and Discussions}
 
 \section{Team justification}
 
