@@ -5,15 +5,31 @@ import numpy as np
 from datetime import date
 from time import mktime
 from operator import add
+import matplotlib.pyplot as plt
 from sklearn.svm import SVC
+from sklearn.decomposition import PCA
 from sklearn.preprocessing import Imputer
 from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import confusion_matrix
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cross_validation import cross_val_score
+from sklearn.cross_validation import train_test_split
+
+def plot_confusion_matrix(cm, title='Confusion matrix', cmap=plt.cm.Blues):
+    labels = ['WNV', 'No WNV']
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(labels))
+    plt.xticks(tick_marks, labels, rotation=45)
+    plt.yticks(tick_marks, labels)
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
 
 ##
 # read files
@@ -168,12 +184,11 @@ def merge_data(test_data, weather_data):
 # Performs preprocessing and some classification
 ##
 if __name__ == '__main__':
+  
+  print "===== Reading Files ====="
   # Read the files
   data, spec_data, mos_count, classes = read_file('../data/train.csv')
   weather_data = read_weather_data('../data/weather.csv')
-
-  print len(mos_count)
-  print len(data)
 
   data = merge_data(data, weather_data)
 
@@ -182,7 +197,7 @@ if __name__ == '__main__':
     for i in range(len(data)):
       csvwriter.writerow(list(data[i]) + [mos_count[i], classes[i]])
 
-  print 'Wrote merged file'
+  print 'Wrote merged training data file\n'
 
   X = process(spec_data, data)
 
@@ -193,15 +208,13 @@ if __name__ == '__main__':
 
   testX = process(test_ddata, test_cdata)
 
-  #svm = SVC(kernel='rbf')
-  #svm.fit(X, classes)
-  #y_hat = svm.predict(testX)
-
+  print "====Train Classifiers===="
   rfc = RandomForestClassifier(n_jobs=-1, n_estimators=5)
   knn = KNeighborsClassifier(5)
   nb = GaussianNB()
   dt = DecisionTreeClassifier(random_state=0, criterion='entropy')
-  svm = SVC(class_weight = 'balanced', C=100, kernel='poly')
+  svmC = 85 
+  svm = SVC(class_weight = 'balanced', C=svmC, kernel='poly')
 
   nb.fit(X, classes)
   print "Fit Naive Bayes"
@@ -219,32 +232,60 @@ if __name__ == '__main__':
   #y_hat3 = dt.predict(testX)
   #y_hat4 = knn.predict(testX)
   y_hat5 = svm.predict(testX)
-  with open('../data/testoutput.csv', 'w') as csvfile:
-    csvwriter = csv.writer(csvfile)
-    csvwriter.writerow(['id', 'WnvPresent'])
-    for i in range(len(y_hat1)):
-      classification = y_hat5[i]#max([y_hat1[i], y_hat2[i], y_hat3[i], y_hat4[i]])
-      csvwriter.writerow([i+1, classification])
+  if False:
+    with open('../data/testoutput.csv', 'w') as csvfile:
+      csvwriter = csv.writer(csvfile)
+      csvwriter.writerow(['id', 'WnvPresent'])
+      for i in range(len(y_hat1)):
+        classification = y_hat5[i]
+        csvwriter.writerow([i+1, classification])
 
-  print 'File written'
+    print 'Testing response written.\n'
 
-  cval_scores = cross_val_score(rfc, X, classes, cv=3)
-  print "%s: %0.5f (+/- %0.5f) " % ('rfc', cval_scores.mean(), cval_scores.std() * 2)
-  cval_scores = cross_val_score(dt, X, classes, cv=3)
-  print "%s: %0.5f (+/- %0.5f) " % ('dt', cval_scores.mean(), cval_scores.std() * 2)
-  cval_scores = cross_val_score(nb, X, classes, cv=3)
-  print "%s: %0.5f (+/- %0.5f) " % ('nb', cval_scores.mean(), cval_scores.std() * 2)
-
-  cval_scores = cross_val_score(knn, X, classes, cv=3)
-  print "%s: %0.5f (+/- %0.5f) " % ('knn', cval_scores.mean(), cval_scores.std() * 2)
-
-  cval_scores = cross_val_score(svm, X, classes, cv=3)
-
-  print "%s: %0.5f (+/- %0.5f) " % ('SVC C=...', cval_scores.mean(), cval_scores.std() * 2)
   
-  for k in ['linear', 'poly', 'rbf']:
-    svm = SVC(C=10, kernel=k)
+  print "====Cross Validation===="
+  if False:
+    cval_scores = cross_val_score(rfc, X, classes, cv=3)
+    print "%s: %0.5f (+/- %0.5f) " % ('rfc', cval_scores.mean(), cval_scores.std() * 2)
+    cval_scores = cross_val_score(dt, X, classes, cv=3)
+    print "%s: %0.5f (+/- %0.5f) " % ('dt', cval_scores.mean(), cval_scores.std() * 2)
+    cval_scores = cross_val_score(nb, X, classes, cv=3)
+    print "%s: %0.5f (+/- %0.5f) " % ('nb', cval_scores.mean(), cval_scores.std() * 2)
+
+    cval_scores = cross_val_score(knn, X, classes, cv=3)
+    print "%s: %0.5f (+/- %0.5f) " % ('knn', cval_scores.mean(), cval_scores.std() * 2)
 
     cval_scores = cross_val_score(svm, X, classes, cv=3)
+    print "SVC C=%d: %0.5f (+/- %0.5f) " % (svmC, cval_scores.mean(), cval_scores.std() * 2)
 
-    print "%s: %0.5f (+/- %0.5f) " % (k, cval_scores.mean(), cval_scores.std() * 2)
+  # Confusion Matrix
+  print "====Confusion Matrix===="
+
+  X_train, X_test, y_train, y_test = train_test_split(X, classes, test_size=0.33, random_state=42, stratify=classes)
+  svm.fit(X_train, y_train)
+  y_pred = svm.predict(X_test)
+  cm = confusion_matrix(y_test, y_pred, labels=[1, 0]).astype(np.float)
+  print(cm)
+  plt.figure()
+  plot_confusion_matrix(cm)
+  #print "this is wrong... \\/"
+  #print(cm/cm.astype(np.float).sum(axis=1))
+
+  # Precision & Recall:
+  print "\n====Statistics===="
+  prec = cm[0][0] / (cm[0][0] + cm[1][0])
+  rec  = cm[0][0] / (cm[0][0] + cm[0][1])
+  f1 = 2*prec*rec/(prec + rec)
+  print "Precision: %.4f" % (prec,)
+  print "Recall:    %.4f" % (rec,)
+  print "F1 Score:  %.4f" % (f1,)
+
+  plt.figure()
+  pca = PCA(n_components=2)
+  X_r = pca.fit(X_test).transform(X_test)
+  
+  for c, i, target_name in zip("gr", [0, 1], ["No WNV", "WNV"]):
+    plt.scatter(X_r[y_test == i, 0], X_r[y_test == i, 1], c=c, label=target_name)
+
+  # Print any plots
+  plt.show()
