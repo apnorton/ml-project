@@ -275,8 +275,9 @@ if __name__ == '__main__':
     print "F1 Score:  %.4f" % (f1,)
 
 
-    # Do the PCA plot
+    #### Do the PCA plot
     plt.figure()
+
     pca = PCA(n_components=2)
     X_r = pca.fit(X).transform(X)
     
@@ -284,7 +285,8 @@ if __name__ == '__main__':
     yes = np.array([X_r[i] for i in range(len(X_r)) if  classes[i] == 1])
     
     for c, data, target_name in zip("gr", [no, yes], ["No WNV", "WNV"]):
-      plt.scatter(data[:,0], data[:, 1], c=c, label=target_name)
+      plt.scatter(data[:,0], data[:, 1], c=c, s=20, label=target_name)
+  
 
     # Print any plots
     plt.show()
