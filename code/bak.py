@@ -93,14 +93,11 @@ def read_file(fpath, isTraining=True):
 
         data.append(cont_data)
 
-        cont_data.append(int(date_parts[1])) # month feature
-        cont_data.append(int(date_parts[2])) # day feature
-
       lastRow = row
 
   return data, spec_data, mosCount, classes
 
-def read_weather_data(fpath, s='1'):
+def read_weather_data(fpath):
   cont_data = []
   with open(fpath) as csvfile:
     reader = csv.reader(csvfile)
@@ -115,13 +112,11 @@ def read_weather_data(fpath, s='1'):
     cont_labels = ['Date', 'Tavg', 'Depart', 'DewPoint', 'StnPressure', 'AvgSpeed', 'Tmax', 'Tmin', 'WetBulb', 'PrecipTotal', 'DiffPressure']
 
     for row in reader:
-      r1 = row
-      r2 = reader.next()
       # Only consider station 1
       if row[labels['Station']] != '1':
         continue
 
-      cont_row = [r1[labels[s]] for s in cont_labels] + [r2[labels[s]] for s in cont_labels[1:]]# get the columns we want
+      cont_row = [row[labels[s]] for s in cont_labels] # get the columns we want
 
       # Convert date to number
       date_parts = cont_row[0].split('-')
@@ -141,7 +136,6 @@ def read_weather_data(fpath, s='1'):
       cont_data.append(cont_row)
 
     return cont_data
-
 
 
 def process(discrete, cont):
@@ -183,7 +177,7 @@ def merge_data(test_data, weather_data):
   for j in range(len(test_data)): 
     while(weather_data[i][0] != test_data[j][0]):
       i+= 1
-    total_data.append(np.concatenate((test_data[j][1:], weather_data[i][1:]), axis=0))
+    total_data.append(np.concatenate((test_data[j][:], weather_data[i][1:]), axis=0))
 
   return np.array(total_data)
 	
@@ -196,8 +190,6 @@ if __name__ == '__main__':
   # Read the files
   data, spec_data, mos_count, classes = read_file('../data/train.csv')
   weather_data = read_weather_data('../data/weather.csv')
-
-  print np.array(weather_data).shape
 
   data = merge_data(data, weather_data)
 
@@ -220,48 +212,64 @@ if __name__ == '__main__':
   testX = process(test_ddata, test_cdata)
 
   print "====Train Classifiers===="
-  rfc = RandomForestClassifier(n_jobs=-1, n_estimators=100, class_weight='balanced')
+  rfc = RandomForestClassifier(n_jobs=-1, n_estimators=5)
   knn = KNeighborsClassifier(5)
   nb = GaussianNB()
   dt = DecisionTreeClassifier(random_state=0, criterion='entropy')
   svmC = 85 
-  svm = SVC(class_weight = 'balanced', C=svmC, kernel='poly') 
+  svm = SVC(class_weight = 'balanced', C=svmC, kernel='poly')
 
-  labels = ['nb', 'rfc', 'dt', 'knn', 'svm']
-  machines = [nb, rfc, dt, knn, svm]
-  for i in range(len(machines)):
-    machines[i].fit(X, classes)
-    print 'Fit ' + labels[i]
+  nb.fit(X, classes)
+  print "Fit Naive Bayes"
+  rfc.fit(X, classes)
+  print "Fit Random Forest"
+  dt.fit(X, classes)
+  print "Fit D tree"
+  knn.fit(X, classes)
+  print "Fit KNN"
+  svm.fit(X, classes)
+  print "Fit SVM"
 
   if '-o' in argv:
-    for i in range(len(machines)):
-      y_hat = machines[i].predict(testX)
-      with open('../data/testoutput-' + labels[i] + '.csv', 'w') as csvfile:
-        csvwriter = csv.writer(csvfile)
-        csvwriter.writerow(['id', 'WnvPresent'])
-        for j in range(len(y_hat)):
-          csvwriter.writerow([j+1, y_hat[j]])
+    y_hat1 = nb.predict(testX)
+    #y_hat2 = rfc.predict(testX)
+    #y_hat3 = dt.predict(testX)
+    #y_hat4 = knn.predict(testX)
+    y_hat5 = svm.predict(testX)
+    with open('../data/testoutput.csv', 'w') as csvfile:
+      csvwriter = csv.writer(csvfile)
+      csvwriter.writerow(['id', 'WnvPresent'])
+      for i in range(len(y_hat1)):
+        classification = y_hat5[i]
+        csvwriter.writerow([i+1, classification])
 
-      print 'Testing response written for machine ' + labels[i]
+    print 'Testing response written.\n'
 
   
   if '-cv' in argv:
     print "====Cross Validation===="
-    for i in range(len(machines)):
-      cval_scores = cross_val_score(machines[i], X, classes, cv=3)
-      print "%s: %0.5f (+/- %0.5f) " % (labels[i], cval_scores.mean(), cval_scores.std() * 2)
+    cval_scores = cross_val_score(rfc, X, classes, cv=3)
+    print "%s: %0.5f (+/- %0.5f) " % ('rfc', cval_scores.mean(), cval_scores.std() * 2)
+    cval_scores = cross_val_score(dt, X, classes, cv=3)
+    print "%s: %0.5f (+/- %0.5f) " % ('dt', cval_scores.mean(), cval_scores.std() * 2)
+    cval_scores = cross_val_score(nb, X, classes, cv=3)
+    print "%s: %0.5f (+/- %0.5f) " % ('nb', cval_scores.mean(), cval_scores.std() * 2)
+
+    cval_scores = cross_val_score(knn, X, classes, cv=3)
+    print "%s: %0.5f (+/- %0.5f) " % ('knn', cval_scores.mean(), cval_scores.std() * 2)
+
+    cval_scores = cross_val_score(svm, X, classes, cv=3)
+    print "SVC C=%d: %0.5f (+/- %0.5f) " % (svmC, cval_scores.mean(), cval_scores.std() * 2)
 
   # Confusion Matrix
   if '-stat' in argv:
     print "====Confusion Matrix===="
 
-    classifier = svm 
     X_train, X_test, y_train, y_test = train_test_split(X, classes, test_size=0.33, random_state=42, stratify=classes)
-    classifier.fit(X_train, y_train)
-    y_pred = classifier.predict(X_test)
+    svm.fit(X_train, y_train)
+    y_pred = svm.predict(X_test)
     cm = confusion_matrix(y_test, y_pred, labels=[1, 0]).astype(np.float)
     print(cm)
-    print "Actual positive samples: %d" % (sum(y_test),)
     plt.figure()
     plot_confusion_matrix(cm)
 
@@ -274,17 +282,16 @@ if __name__ == '__main__':
     print "Recall:    %.4f" % (rec,)
     print "F1 Score:  %.4f" % (f1,)
 
-
     # Do the PCA plot
-    plt.figure()
-    pca = PCA(n_components=2)
-    X_r = pca.fit(X).transform(X)
-    
-    no = np.array([X_r[i] for i in range(len(X_r)) if  classes[i] == 0])
-    yes = np.array([X_r[i] for i in range(len(X_r)) if  classes[i] == 1])
-    
-    for c, data, target_name in zip("gr", [no, yes], ["No WNV", "WNV"]):
-      plt.scatter(data[:,0], data[:, 1], c=c, label=target_name)
+    #plt.figure()
+    #pca = PCA(n_components=2)
+    #X_r = pca.fit(X_test).transform(X_test)
+    #
+    #no = np.array([X_r[i] for i in range(len(X_r)) if  y_test[i] == 0])
+    #yes = np.array([X_r[i] for i in range(len(X_r)) if  y_test[i] == 1])
+    #
+    #for c, data, target_name in zip("gr", [no, yes], ["No WNV", "WNV"]):
+    #  plt.scatter(data[:,0], data[:, 1], c=c, label=target_name)
 
     # Print any plots
     plt.show()
